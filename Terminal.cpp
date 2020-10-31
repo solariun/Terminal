@@ -106,18 +106,16 @@ Terminal::Terminal (TerminalStream& stdio) :
 {
 }
 
-
-Ternial::~Terminal ()
+Terminal::~Terminal ()
 {
     CleanAllCommands ();
 }
 
 void Terminal::CleanAllCommands ()
 {
-    CommandItem* pCommandItem = nullptr; 
+    CommandItem* pCommandItem = nullptr;
     if (m_pStart != nullptr)
     {
-        
     }
 }
 
@@ -392,7 +390,7 @@ void Terminal::Start ()
 
     while (m_bStarted && ReadCommandLine (m_strCommandLine))
     {
-        if (!ExecuteCommand (m_strCommandLine))
+        if (m_strCommandLine.length () > 0 && !ExecuteCommand (m_strCommandLine))
         {
             m_client ().println ("Error, command not recognized.");
         }
@@ -418,14 +416,17 @@ TerminalCommand* Terminal::GetCommand (const String& strCommand)
                 break;
             }
         } while ((commandItem = commandItem->pNext) != nullptr);
-
-        if (commandItem == nullptr)
-        {
-            return nullptr;
-        }
     }
 
-    return &commandItem->command;
+    if (commandItem == nullptr)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return &commandItem->command;
+    }
+    
 }
 
 bool Terminal::ExecuteCommand (const String& commandLine)
@@ -473,6 +474,6 @@ bool Terminal::ExecuteCommand (const String& commandLine)
     }
 
     m_strCommandLine = "";
-    
+
     return bRet;
 }
