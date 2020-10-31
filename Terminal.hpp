@@ -41,6 +41,8 @@
 #define TERM_SUBVERSION "1"
 #define TERM_STAGE "dev"
 
+uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& returnText, bool countOnly);
+
 class TerminalStream
 {
 public:
@@ -58,6 +60,8 @@ private:
     Stream& m_client;
 };
 
+class Terminal;
+
 typedef void (*PrintFunction) (TerminalStream&);
 
 class TerminalCommand
@@ -67,16 +71,13 @@ public:
 
     virtual ~TerminalCommand ();
 
-    virtual bool Execute () = 0;
+    virtual bool Execute (Terminal& terminal, TerminalStream& client , const String& strCommandLine) = 0;
 
-    virtual void HelpMessage () = 0;
-
-    void SetStdio (TerminalStream& stdio);
-
-    TerminalStream& Stdio ();
+    virtual void HelpMessage (TerminalStream& client) = 0;
 
 private:
     TerminalStream* m_client;
+    Stream* m_stream;
 };
 
 class Terminal
@@ -102,8 +103,6 @@ protected:
     bool ReadCommandLine (String& readCommand);
 
     bool WaitAvailableForReading ();
-
-    uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& returnText, bool countOnly);
 
     bool ExecuteCommand (const String& commandLine);
     

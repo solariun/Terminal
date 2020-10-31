@@ -60,22 +60,12 @@ Stream& TerminalStream::operator() ()
 
 TerminalCommand::TerminalCommand ()
 {
-    m_client = (TerminalStream*)&Serial;
 }
 
 TerminalCommand::~TerminalCommand ()
 {
 }
 
-void TerminalCommand::SetStdio (TerminalStream& stdio)
-{
-    m_client = &stdio;
-}
-
-TerminalStream& TerminalCommand::Stdio ()
-{
-    return *m_client;
-}
 /*
  * ---------------------------------
  * Terminal
@@ -113,10 +103,22 @@ Terminal::~Terminal ()
 
 void Terminal::CleanAllCommands ()
 {
-    CommandItem* pCommandItem = nullptr;
-    if (m_pStart != nullptr)
+    CommandItem* pCommandItem = nullptr; 
+ 
+    m_client ().println ("Starting deleting commands.");
+
+    while (m_pStart != nullptr)
     {
+        pCommandItem = m_pStart;
+        m_pStart = m_pStart->pNext;
+
+        m_client().print ("Deleting ");
+        m_client().println (pCommandItem->strCommandName);
+
+        delete pCommandItem;
     }
+
+    m_client ().println ("All commands deleted.");
 }
 
 void Terminal::AttachMOTD (PrintFunction printFunction)
@@ -156,9 +158,6 @@ bool Terminal::AttachCommand (const String& strCommandName, TerminalCommand& com
 
     if (commandItem != nullptr)
     {
-        // Set Terminal's stdio
-        command.SetStdio (m_client);
-
         // Will add using reverse order
         m_pStart = commandItem;
         bRet = true;
@@ -181,14 +180,14 @@ void Terminal::PrintHelp ()
         {
             m_client ().print (commandItem->strCommandName);
             m_client ().print (":");
-            commandItem->command.HelpMessage ();
+            commandItem->command.HelpMessage (m_client);
         } while ((commandItem = commandItem->pNext) != nullptr);
 
         m_client ().println ("-------------------------");
     }
 }
 
-uint8_t Terminal::ParseOption (const String& commandLine, uint8_t nCommandIndex, String& returnText, bool countOnly)
+uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& returnText, bool countOnly)
 {
     uint8_t nCommandOffSet = 0;
 
@@ -438,7 +437,7 @@ bool Terminal::ExecuteCommand (const String& commandLine)
     // m_client ().print ("Command: ");
     // m_client ().println (m_strCommandLine);
 
-    // m_client ().print ("Itens: ");
+    // m_client ().print ("Items: ");
     // m_client ().print (ParseOption (m_strCommandLine, 0xFF, strCommand, true));
     // m_client ().print (", Command: ");
     // m_client ().println (strCommand);
@@ -462,7 +461,7 @@ bool Terminal::ExecuteCommand (const String& commandLine)
 
         if ((termCommand = GetCommand (strCommand)) != nullptr)
         {
-            if (!termCommand->Execute ())
+            if (!termCommand->Execute (*this, m_client, (const String&) strCommand))
             {
                 m_client ().println ("Command error");
             }
