@@ -41,7 +41,7 @@
 #define TERM_SUBVERSION "1"
 #define TERM_STAGE "dev"
 
-uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& returnText, bool countOnly);
+uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& returnText, bool count = false);
 
 class TerminalStream
 {

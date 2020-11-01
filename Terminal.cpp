@@ -103,8 +103,8 @@ Terminal::~Terminal ()
 
 void Terminal::CleanAllCommands ()
 {
-    CommandItem* pCommandItem = nullptr; 
- 
+    CommandItem* pCommandItem = nullptr;
+
     m_client ().println ("Starting deleting commands.");
 
     while (m_pStart != nullptr)
@@ -112,8 +112,8 @@ void Terminal::CleanAllCommands ()
         pCommandItem = m_pStart;
         m_pStart = m_pStart->pNext;
 
-        m_client().print ("Deleting ");
-        m_client().println (pCommandItem->strCommandName);
+        m_client ().print ("Deleting ");
+        m_client ().println (pCommandItem->strCommandName);
 
         delete pCommandItem;
     }
@@ -187,7 +187,7 @@ void Terminal::PrintHelp ()
     }
 }
 
-uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& returnText, bool countOnly)
+uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& returnText, bool count)
 {
     uint8_t nCommandOffSet = 0;
 
@@ -202,16 +202,13 @@ uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& r
 
     currentState = state::NoText;
 
-    if (!countOnly)
-    {
-        returnText = "";
-    }
-
     bool boolScape = false;
 
     String strBuffer = "";
 
     char chChar = 0;
+
+    returnText = "";
 
     for (int nCount = 0; nCount < commandLine.length (); nCount++)
     {
@@ -260,22 +257,20 @@ uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& r
 
             if (currentState == state::NoText)
             {
-                if (countOnly == false && nCommandIndex == nCommandOffSet)
+                if (count == false && nCommandIndex == nCommandOffSet)
                 {
                     break;
                 }
-
-                if (!countOnly) returnText = "";
             }
             else
             {
-                if (countOnly == false)
+                if (boolScape == true and isdigit (chChar))
                 {
-                    if (boolScape == true and isdigit (chChar))
-                    {
-                        strBuffer += chChar;
-                    }
-                    else
+                    strBuffer += chChar;
+                }
+                else
+                {
+                    if (nCommandIndex == nCommandOffSet)
                     {
                         // To add special char \000\ 00 = number only
                         if (strBuffer.length () > 0)
@@ -293,7 +288,7 @@ uint8_t ParseOption (const String& commandLine, uint8_t nCommandIndex, String& r
         }
     }
 
-    if (!countOnly && (nCommandIndex != nCommandOffSet))
+    if (!count && (nCommandIndex != nCommandOffSet))
     {
         returnText = "";
         nCommandOffSet = 0;
@@ -425,7 +420,6 @@ TerminalCommand* Terminal::GetCommand (const String& strCommand)
     {
         return &commandItem->command;
     }
-    
 }
 
 bool Terminal::ExecuteCommand (const String& commandLine)
@@ -461,7 +455,7 @@ bool Terminal::ExecuteCommand (const String& commandLine)
 
         if ((termCommand = GetCommand (strCommand)) != nullptr)
         {
-            if (!termCommand->Execute (*this, m_client, (const String&) strCommand))
+            if (!termCommand->Execute (*this, m_client, (const String&)m_strCommandLine))
             {
                 m_client ().println ("Command error");
             }
